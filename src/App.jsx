@@ -1,6 +1,8 @@
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
+import Sidebar from './components/Sidebar';
+import ProtectedRoute from './components/ProtectedRoute';
 
-// Importe tes pages (Vérifie que les noms correspondent à tes fichiers)
+// Imports des pages 
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Map from './pages/Map';
@@ -8,27 +10,44 @@ import BornesList from './pages/BornesList';
 import Stats from './pages/Stats';
 import Settings from './pages/Settings';
 
+// Menu à gauche + Contenu à droite
+const MainLayout = () => {
+  return (
+    <div style={{ display: 'flex' }}>
+      <Sidebar />
+      <div style={{ 
+        marginLeft: '220px', 
+        width: 'calc(100% - 220px)', 
+        minHeight: '100vh', 
+        backgroundColor: '#e0e0e0' 
+      }}>
+        <Outlet />
+      </div>
+    </div>
+  );
+};
+
 function App() {
   return (
     <BrowserRouter>
-      {/* --- MENU TEMPORAIRE POUR TESTER --- */}
-      <nav style={{ padding: '10px', borderBottom: '2px solid black' }}>
-        <Link to="/" style={{ marginRight: '10px' }}>Login</Link>
-        <Link to="/dashboard" style={{ marginRight: '10px' }}>Dashboard</Link>
-        <Link to="/map" style={{ marginRight: '10px' }}>Carte</Link>
-        <Link to="/list" style={{ marginRight: '10px' }}>Liste</Link>
-        <Link to="/stats" style={{ marginRight: '10px' }}>Stats</Link>
-        <Link to="/settings">Settings</Link>
-      </nav>
-
-      {/* --- LE CONTENU QUI CHANGE --- */}
       <Routes>
+        
+        {/* 1. Route Publique (Le Login) */}
         <Route path="/" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/map" element={<Map />} />
-        <Route path="/list" element={<BornesList />} />
-        <Route path="/stats" element={<Stats />} />
-        <Route path="/settings" element={<Settings />} />
+
+        {/* 2. Routes Protégées  */}
+        <Route element={<ProtectedRoute />}>
+          
+          <Route element={<MainLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/map" element={<Map />} />
+            <Route path="/list" element={<BornesList />} />
+            <Route path="/stats" element={<Stats />} />
+            <Route path="/settings" element={<Settings />} />
+          </Route>
+
+        </Route>
+
       </Routes>
     </BrowserRouter>
   );
