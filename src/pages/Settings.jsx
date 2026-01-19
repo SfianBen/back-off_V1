@@ -8,3 +8,8 @@ function Settings() {
 }
 
 export default Settings;
+
+
+// export de données 
+// changements de mdp 
+// pref utilisateur

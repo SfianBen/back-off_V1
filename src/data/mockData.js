@@ -8,10 +8,9 @@ export const PARKINGS_DATA = [
     latitude: 50.3562,
     longitude: 3.5241,
     bornes: [
-      { id: "B001", numero_place: 1, statut: "libre", date: "10/01 10:30" },
-      { id: "B002", numero_place: 2, statut: "occupée", date: "10/01 11:00" },
-      { id: "B003", numero_place: 3, statut: "libre", date: "09/01 18:00" },
-      { id: "B004", numero_place: 4, statut: "anomalie", date: "09/01 17:45" },
+      { id: "B001", statut: "libre", date: "10/01 10:30" },
+      { id: "B002", statut: "occupée", date: "10/01 11:00" },
+      { id: "B003", statut: "anomalie", date: "09/01 18:00" },
     ]
   },
   {
@@ -21,8 +20,8 @@ export const PARKINGS_DATA = [
     latitude: 50.3585,
     longitude: 3.5238,
     bornes: [
-      { id: "B005", numero_place: 1, statut: "libre", date: "10/01 12:30" },
-      { id: "B006", numero_place: 2, statut: "libre", date: "10/01 09:15" },
+      { id: "B005", statut: "libre", date: "10/01 12:30" },
+      { id: "B006", statut: "libre", date: "10/01 09:15" },
     ]
   },
   {
@@ -32,8 +31,8 @@ export const PARKINGS_DATA = [
     latitude: 50.3220,
     longitude: 3.5110,
     bornes: [
-      { id: "B007", numero_place: 1, statut: "occupée", date: "10/01 12:30" },
-      { id: "B008", numero_place: 2, statut: "libre", date: "10/01 14:00" },
+      { id: "B007", statut: "occupée", date: "10/01 12:30" },
+      { id: "B008", statut: "libre", date: "10/01 14:00" },
     ]
   }
 ];
@@ -82,7 +81,7 @@ export const getAllBornesList = () => {
   
   // --- TRI ---
   return list.sort((a, b) => {
-    // Petite fonction interne pour convertir en date
+    // fonction  pour convertir en date
     const parseDate = (dateStr) => {
       const [jourMois, heure] = dateStr.split(' ');
       const [jour, mois] = jourMois.split('/');
