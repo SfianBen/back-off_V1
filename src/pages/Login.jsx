@@ -1,19 +1,52 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_URL } from '../config'; // On importe l'adresse du backend
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState(''); // Pour afficher les erreurs proprement ausssi cote backend
+  const [isLoading, setIsLoading] = useState(false); 
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    // Simult de connexion
-    if (email === "gael.verhaeghe@wheelock.fr" && password === "admin123") {
-      localStorage.setItem("userToken", "token-secret-wheelock");
-      navigate('/dashboard');
-    } else {
-      alert("Erreur : Essayez gael.verhaeghe@wheelock.fr et admin123");
+    setError(''); // On efface les anciennes erreurs
+    setIsLoading(true);
+
+    try {
+      // --- liason---
+      
+      // 1.URL
+      const response = await fetch(`${API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: email, 
+          password: password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+
+        localStorage.setItem("userToken", data.access_token);
+        
+        console.log("Connexion réussie ! Token:", data.access_token);
+        navigate('/dashboard');
+      } else {
+        // Gestion des erreurs 
+        setError("Identifiants incorrects. Veuillez réessayer.");
+      }
+
+    } catch (err) {
+      console.error(err);
+      setError(" :(  Impossible de contacter le serveur (Vérifie que le backend tourne).");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -22,6 +55,7 @@ function Login() {
       <div style={styles.card}>
         
         <div style={styles.header}>
+          {/* logo.svg */}
           <img src="/logo.svg" alt="Logo Wheelock" style={styles.logo} />
           <h2 style={styles.title}>Back-Office Administration</h2>
         </div>
@@ -34,6 +68,7 @@ function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               style={styles.input}
+              required
             />
           </div>
 
@@ -44,11 +79,15 @@ function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               style={styles.input}
+              required
             />
           </div>
 
-          <button type="submit" style={styles.button}>
-            Se connecter
+          {/* Petit message d'erreur en rouge */}
+          {error && <div style={{color: 'red', fontSize: '12px', textAlign: 'center'}}>{error}</div>}
+
+          <button type="submit" style={styles.button} disabled={isLoading}>
+            {isLoading ? 'Connexion...' : 'Se connecter'}
           </button>
         </form>
 
