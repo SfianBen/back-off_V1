@@ -1,8 +1,8 @@
-const API_URL = "http://localhost:8000/api";
+const API_URL = "http://localhost:8000";
 
 // ============ AUTHENTIFICATION ============
 export async function login(username, password) {
-  const res = await fetch(`${API_URL}/auth/login`, {
+  const res = await fetch(`${API_URL}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
@@ -18,7 +18,7 @@ export async function login(username, password) {
 
 // ============ PARKINGS (DOCKS GROUPS) ============
 export async function fetchParkings(lat, lon, radius = 5000) {
-  const url = new URL(`${API_URL}/public/docks-groups`);
+  const url = new URL(`${API_URL}/api/public/docks-groups`);
   if (lat && lon) {
     url.searchParams.set("lat", lat);
     url.searchParams.set("lon", lon);
@@ -33,7 +33,7 @@ export async function fetchParkings(lat, lon, radius = 5000) {
 }
 
 export async function createParkingGroup(parking, token) {
-  const res = await fetch(`${API_URL}/admin/docks-groups`, {
+  const res = await fetch(`${API_URL}/api/admin/docks-groups`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -51,7 +51,7 @@ export async function createParkingGroup(parking, token) {
 
 // Supprimer un parking (Docks Group)
 export async function deleteParkingGroup(groupId, token) {
-    const res = await fetch(`${API_URL}/admin/docks-groups/${groupId}`, {
+    const res = await fetch(`${API_URL}/api/admin/docks-groups/${groupId}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -63,7 +63,7 @@ export async function deleteParkingGroup(groupId, token) {
   
   // Supprimer un socle (Dock)
   export async function deleteDock(dockId, token) {
-    const res = await fetch(`${API_URL}/admin/docks/${dockId}`, {
+    const res = await fetch(`${API_URL}/api/admin/docks/${dockId}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -75,7 +75,7 @@ export async function deleteParkingGroup(groupId, token) {
 
 // ============ BORNES (DOCKS) ============
 export async function createDock(dock, token) {
-  const res = await fetch(`${API_URL}/admin/docks`, {
+  const res = await fetch(`${API_URL}/api/admin/docks`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -92,7 +92,7 @@ export async function createDock(dock, token) {
 }
 
 export async function updateDock(dockId, dock, token) {
-  const res = await fetch(`${API_URL}/admin/docks/${dockId}`, {
+  const res = await fetch(`${API_URL}/api/admin/docks/${dockId}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -109,7 +109,7 @@ export async function updateDock(dockId, dock, token) {
 }
 
 export async function getDocks(token) {
-  const res = await fetch(`${API_URL}/admin/docks`, {
+  const res = await fetch(`${API_URL}/api/admin/docks`, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -128,7 +128,7 @@ export async function uploadParkingImage(groupId, imageFile, token) {
   const formData = new FormData();
   formData.append('file', imageFile);
 
-  const res = await fetch(`http://localhost:8000/images/upload/docks-group/${groupId}`, {
+  const res = await fetch(`${API_URL}/api/admin/docks-groups/${groupId}/image`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -157,7 +157,7 @@ export async function uploadParkingImageBase64(groupId, base64Image, token) {
   const formData = new FormData();
   formData.append('file', blob, 'parking.jpg');
 
-  const res = await fetch(`${API_URL}/admin/docks-groups/${groupId}/image`, {
+  const res = await fetch(`${API_URL}/api/admin/docks-groups/${groupId}/image`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -173,7 +173,7 @@ export async function uploadParkingImageBase64(groupId, base64Image, token) {
 }
 
 export async function deleteParkingImage(groupId, token) {
-  const res = await fetch(`http://localhost:8000/images/docks-group/${groupId}`, {
+  const res = await fetch(`${API_URL}/api/admin/docks-groups/${groupId}/image`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -189,7 +189,7 @@ export async function deleteParkingImage(groupId, token) {
 
 // ============ SENSOR UPDATE ============
 export async function updateSensor(sensorId, status) {
-  const res = await fetch(`${API_URL}/sensor/update`, {
+  const res = await fetch(`${API_URL}/api/sensor/update`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -209,7 +209,7 @@ export async function updateSensor(sensorId, status) {
 
 // ============ REPORT DEFECT ============
 export async function reportDefect(dockId, description) {
-  const res = await fetch(`${API_URL}/report-defect`, {
+  const res = await fetch(`${API_URL}/api/report-defect`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

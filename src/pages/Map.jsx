@@ -9,6 +9,8 @@ import {
   deleteParkingGroup,         
 } from '../services/api';
 
+const API_URL = "http://localhost:8000";
+
 // Icône parking
 const createParkingIcon = (occupees, total, color) => new L.DivIcon({
   className: 'parking-marker',
@@ -224,7 +226,7 @@ function ParkingPopup({ parking, onDelete, onReload, token }) {
       console.log('Appel API PUT /api/admin/docks/', borne.db_id);
       
       // Utiliser PUT /api/admin/docks/{dock_id}
-      const res = await fetch(`http://localhost:8000/api/admin/docks/${borne.db_id}`, {
+      const res = await fetch(`${API_URL}/api/admin/docks/${borne.db_id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -241,14 +243,13 @@ function ParkingPopup({ parking, onDelete, onReload, token }) {
         throw new Error("Erreur mise à jour");
       }
       
-      const result = await res.json();
-      console.log('✅ Statut mis à jour:', result);
+      console.log(' Photo uploadée avec succès');
       
       // Attendre un peu avant de recharger
       await new Promise(resolve => setTimeout(resolve, 300));
       await onReload();
     } catch (error) {
-      console.error('❌ Erreur mise à jour statut:', error);
+      console.error('Erreur mise à jour statut:', error);
       alert('Erreur lors de la mise à jour du statut: ' + error.message);
     }
   };
@@ -257,7 +258,7 @@ function ParkingPopup({ parking, onDelete, onReload, token }) {
     if (!window.confirm(`Supprimer la borne ${borne.id} définitivement ?`)) return;
     
     try {
-      const res = await fetch(`http://localhost:8000/api/admin/docks/${borne.db_id}`, {
+      const res = await fetch(`${API_URL}/api/admin/docks/${borne.db_id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -285,7 +286,7 @@ function ParkingPopup({ parking, onDelete, onReload, token }) {
     }
     
     try {
-      const res = await fetch(`http://localhost:8000/api/admin/docks`, {
+      const res = await fetch(`${API_URL}/api/admin/docks`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -314,60 +315,53 @@ function ParkingPopup({ parking, onDelete, onReload, token }) {
   const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    
-    // Réinitialiser l'input
+  
     e.target.value = '';
-    
+  
     try {
-      console.log('🖼️ Upload photo pour parking ID:', parking.id);
-      
-      // 1. Supprimer l'ancienne photo si elle existe
+      // Supprimer l'ancienne photo si elle existe
       if (parking.photo) {
-        try {
-          console.log('🗑️ Suppression ancienne photo...');
-          const deleteRes = await fetch(`http://localhost:8000/images/docks-group/${parking.id}`, {
+        await fetch(
+          `${API_URL}/api/admin/docks-groups/${parking.id}/image`,
+          {
             method: "DELETE",
-          });
-          
-          if (deleteRes.ok) {
-            console.log('✅ Ancienne photo supprimée');
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
-        } catch (error) {
-          console.log('⚠️ Pas d\'ancienne photo à supprimer:', error);
-        }
+        );
       }
-      
-      // 2. Uploader la nouvelle photo
-      console.log('📤 Upload nouvelle photo...');
+  
+      // Upload nouvelle photo
       const formData = new FormData();
       formData.append('file', file);
   
-      const res = await fetch(`http://localhost:8000/images/upload/docks-group/${parking.id}`, {
-        method: "POST",
-        body: formData,
-      });
-      
-      console.log('Status upload:', res.status);
-      
+      const res = await fetch(
+        `${API_URL}/api/admin/docks-groups/${parking.id}/image`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+  
       if (!res.ok) {
-        const errorText = await res.text();
-        console.error('❌ Erreur upload:', errorText);
-        throw new Error("Erreur upload: " + errorText);
+        throw new Error(await res.text());
       }
-      
-      const result = await res.json();
-      console.log('✅ Photo uploadée:', result);
-      
+  
       alert('Photo mise à jour avec succès');
-      
-      // Attendre avant de recharger
+  
       await new Promise(resolve => setTimeout(resolve, 500));
       await onReload();
+  
     } catch (error) {
-      console.error('❌ Erreur upload photo:', error);
-      alert('Erreur lors de l\'upload de la photo: ' + error.message);
+      console.error('Erreur upload photo:', error);
+      alert('Erreur lors de l\'upload de la photo');
     }
   };
+  
 
   return (
     <div style={{ minWidth: '280px', fontFamily: 'Arial, sans-serif' }}>
@@ -662,7 +656,7 @@ function Map() {
     }
     
     try {
-      const res = await fetch(`http://localhost:8000/api/admin/docks?lat=50.357&lon=3.523&radius_meters=5000`, {
+      const res = await fetch(`${API_URL}/api/admin/docks?lat=50.357&lon=3.523&radius_meters=5000`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -671,8 +665,8 @@ function Map() {
       if (!res.ok) throw new Error("Erreur lors du chargement des parkings");
       
       const data = await res.json();
-      console.log('📦 Données brutes API:', data);
-      console.log('📊 Nombre de parkings:', data.length);
+      console.log('Données brutes API:', data);
+      console.log('Nombre de parkings:', data.length);
       
       const mapped = data.map(p => {
         const parking = {
@@ -696,14 +690,14 @@ function Map() {
           }),
           photo: p.image_url,
         };
-        console.log(`✅ Parking mappé: ${parking.nom} (${parking.bornes.length} bornes)`);
+        console.log(`Parking mappé: ${parking.nom} (${parking.bornes.length} bornes)`);
         return parking;
       });
       
-      console.log('✅ Total parkings chargés:', mapped.length);
+      console.log('Total parkings chargés:', mapped.length);
       setParkings(mapped);
     } catch (error) {
-      console.error('❌ Erreur chargement parkings:', error);
+      console.error('Erreur chargement parkings:', error);
     }
   };
 
@@ -731,7 +725,7 @@ function Map() {
   
     setLoading(true);
     try {
-      console.log('📍 Création parking:', parkingData);
+      console.log('Création parking:', parkingData);
       
       // 1. Créer le parking group
       const group = await createParkingGroup({
@@ -741,12 +735,12 @@ function Map() {
         longitude: parkingData.longitude,
       }, token);
   
-      console.log('✅ Groupe créé:', group);
+      console.log('Groupe créé:', group);
   
       // 2. Uploader la photo si présente
       if (parkingData.photo) {
         try {
-          console.log('📤 Upload photo...');
+          console.log('Upload photo...');
           const base64Data = parkingData.photo.split(',')[1];
           const byteCharacters = atob(base64Data);
           const byteNumbers = new Array(byteCharacters.length);
@@ -759,16 +753,27 @@ function Map() {
           const formData = new FormData();
           formData.append('file', blob, 'parking.jpg');
   
-          const photoRes = await fetch(`http://localhost:8000/images/upload/docks-group/${group.id}`, {
-            method: "POST",
-            body: formData,
-          });
+          const photoRes = await fetch(
+            `${API_URL}/api/admin/docks-groups/${group.id}/image`,
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              body: formData,
+            }
+          );
+          
           
           if (photoRes.ok) {
-            console.log('✅ Photo uploadée');
+            console.log('Photo uploadée');
           }
+          if (!photoRes.ok) {
+            throw new Error(await photoRes.text());
+          }
+          
         } catch (error) {
-          console.error('⚠️ Erreur upload photo:', error);
+          console.error('Erreur upload photo:', error);
         }
       }
   
@@ -781,9 +786,9 @@ function Map() {
             sensor_id: socle.capteurId,
             name: socle.socleId,
           }, token);
-          console.log('✅ Socle créé:', socle.socleId);
+          console.log('Socle créé:', socle.socleId);
         } catch (error) {
-          console.error('❌ Erreur création borne', socle.socleId, ':', error);
+          console.error('Erreur création borne', socle.socleId, ':', error);
         }
       }
   
@@ -793,15 +798,15 @@ function Map() {
       setModalPosition(null);
       
       // 5. Recharger les parkings après un délai
-      console.log('⏳ Attente avant rechargement...');
+      console.log('Attente avant rechargement...');
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      console.log('🔄 Rechargement des parkings...');
+      console.log('Rechargement des parkings...');
       await loadParkings();
       
-      alert('✅ Parking ajouté avec succès !');
+      alert('Parking ajouté avec succès !');
     } catch (error) {
-      console.error('❌ Erreur ajout parking:', error);
+      console.error('Erreur ajout parking:', error);
       alert('Erreur lors de l\'ajout du parking: ' + error.message);
     } finally {
       setLoading(false);
