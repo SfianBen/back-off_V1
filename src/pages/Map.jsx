@@ -104,7 +104,7 @@ function AddParkingModal({ position, onClose, onAdd }) {
     setNewCapteurId('');
     setNewSocleStatut('available');
   };
-
+ //Supprimer socle
   const handleDeleteSocle = (socleId) => {
     setSocles(socles.filter(s => s.socleId !== socleId));
   };

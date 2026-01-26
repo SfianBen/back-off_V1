@@ -73,7 +73,7 @@ export async function deleteParkingGroup(groupId, token) {
     return true;
   }
 
-// ============ BORNES (DOCKS) ============
+// ============ BORNES/SOCLE (DOCKS) ============
 export async function createDock(dock, token) {
   const res = await fetch(`${API_URL}/api/admin/docks`, {
     method: "POST",
