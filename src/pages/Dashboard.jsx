@@ -61,8 +61,8 @@ function Dashboard() {
             parkingNom: log.sensor_name, // ex: Quai A - Position 1
             ville: "-",                  // Vide pour l'instant
             // Traduction des statuts
-            statut: log.status === "AVAILABLE" ? "libre" 
-                  : (log.status === "OCCUPIED" ? "occupée" : "anomalie"),
+            statut: log.status === "available" ? "libre" 
+                  : (log.status === "occupied" ? "occupée" : "anomalie"),
             date: log.changed_at         // ex: 2026-01-22 14:30:45
           }));
 
