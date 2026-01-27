@@ -172,6 +172,42 @@ function Stats() {
     return { regions, departements, villes };
   }, [geoByParkingId]);
 
+  const handleTimeGrainChange = (opt) => {
+    setTimeGrain(opt);
+
+    const today = new Date();
+    let start = new Date(today);
+
+    switch (opt) {
+      case 'jour':
+        // Période = aujourd'hui
+        start = new Date(today);
+        break;
+      case 'semaine':
+        start.setDate(start.getDate() - 6);
+        break;
+      case 'mois':
+        start.setMonth(start.getMonth() - 1);
+        break;
+      case 'trimestre':
+        start.setMonth(start.getMonth() - 3);
+        break;
+      case 'semestre':
+        start.setMonth(start.getMonth() - 6);
+        break;
+      case 'année':
+        start.setFullYear(start.getFullYear() - 1);
+        break;
+      default:
+        break;
+    }
+
+    const endStr = today.toISOString().slice(0, 10);
+    const startStr = start.toISOString().slice(0, 10);
+    setStartDate(startStr);
+    setEndDate(endStr);
+  };
+
   useEffect(() => {
     const fetchDocksGroups = async () => {
       try {
@@ -503,7 +539,7 @@ function Stats() {
               {TIME_GRAIN_OPTIONS.map((opt) => (
                 <button
                   key={opt}
-                  onClick={() => setTimeGrain(opt)}
+                  onClick={() => handleTimeGrainChange(opt)}
                   style={{
                     ...styles.timeGrainButton,
                     backgroundColor:
@@ -524,12 +560,14 @@ function Stats() {
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
+                max={new Date().toISOString().slice(0, 10)}
                 style={styles.dateInput}
               />
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
+                max={new Date().toISOString().slice(0, 10)}
                 style={styles.dateInput}
               />
               <div style={styles.kpiValue}>
@@ -818,7 +856,7 @@ const styles = {
   },
   chartsRow: {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
+    gridTemplateColumns: '1fr',
     gap: '16px',
   },
   chartCard: {

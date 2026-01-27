@@ -6,6 +6,7 @@ import { Lock, Save } from 'lucide-react'; // J'ai ajouté des icônes pour le s
 function Settings() {
   // --- PARTIE 1 : EXPORT (Ton code existant) ---
   const [exportType, setExportType] = useState('usage');
+
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     const d = new Date(today);
@@ -40,6 +41,7 @@ function Settings() {
       let sheetName = 'export';
       let fileName = 'wheelock_export.xlsx';
 
+      // Seul type d'export conservé : utilisation par jour
       if (exportType === 'usage') {
         const url = `${API_URL}/api/admin/stats/usage-by-day?start_date=${startDate}&end_date=${endDate}`;
         const res = await fetch(url, { headers });
@@ -64,14 +66,6 @@ function Settings() {
 
         sheetName = 'usage_by_day';
         fileName = 'wheelock_stats_usage_by_day.xlsx';
-      } else if (exportType === 'sensors') {
-        const res = await fetch(`${API_URL}/api/admin/stats/sensors`, { headers });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-
-        rows = [data]; // On met l'objet stats dans un tableau
-        sheetName = 'sensors_stats';
-        fileName = 'wheelock_stats_sensors.xlsx';
       }
 
       if (!rows.length) {
@@ -85,48 +79,30 @@ function Settings() {
       XLSX.writeFile(workbook, fileName);
     } catch (e) {
       console.error('Erreur export XLSX:', e);
-      alert("Erreur lors de l'export des statistiques.");
+      alert('Erreur lors de l\'export des statistiques.');
     }
   };
 
-  // --- LOGIQUE CHANGEMENT MOT DE PASSE ---
+  // --- LOGIQUE CHANGEMENT DE MOT DE PASSE (placeholder sans appel backend) ---
   const handleChangePassword = async () => {
-    if (!oldPassword || !newPassword) {
-      alert("Veuillez remplir l'ancien et le nouveau mot de passe.");
-      return;
-    }
-
-    setIsLoadingPassword(true);
     try {
-      const token = localStorage.getItem('userToken');
-      
-      // Appel API selon Swagger (POST /api/admin/change-password)
-      const response = await fetch(`${API_URL}/api/admin/change-password`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          old_password: oldPassword, // Correspond au Swagger
-          new_password: newPassword
-        })
-      });
+      if (!oldPassword || !newPassword) {
+        alert('Veuillez renseigner les deux champs de mot de passe.');
+        return;
+      }
 
-      if (response.ok) {
-        alert("Mot de passe modifié avec succès !");
+      setIsLoadingPassword(true);
+      // Ici tu pourras appeler ton endpoint backend de changement de mot de passe.
+      // Pour l'instant, on simule juste le succès côté frontend.
+      setTimeout(() => {
+        setIsLoadingPassword(false);
         setOldPassword('');
         setNewPassword('');
-      } else {
-        // Gestion des erreurs (ex: ancien mot de passe incorrect)
-        const errorData = await response.json();
-        const msg = errorData.detail || "Erreur lors du changement de mot de passe.";
-        alert("Erreur : " + msg);
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Erreur de connexion au serveur.");
-    } finally {
+        alert('Mot de passe mis à jour (simulation côté frontend).');
+      }, 500);
+    } catch (e) {
+      console.error('Erreur changement de mot de passe:', e);
+      alert('Erreur lors du changement de mot de passe.');
       setIsLoadingPassword(false);
     }
   };
@@ -153,7 +129,6 @@ function Settings() {
               style={styles.select}
             >
               <option value="usage">Utilisation par jour</option>
-              <option value="sensors">Statistiques capteurs (instantané)</option>
             </select>
           </div>
 
