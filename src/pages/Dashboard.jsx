@@ -62,7 +62,8 @@ function Dashboard() {
             ville: "-",                  // Vide pour l'instant
             // Traduction des statuts
             statut: log.status === "available" ? "libre" 
-                  : (log.status === "occupied" ? "occupée" : "anomalie"),
+                  : log.status === "out_of_service" ? "hors service"
+                  : (log.status === "occupied" ? "occupée" : "inconnu"),
             date: log.changed_at         // ex: 2026-01-22 14:30:45
           }));
 
@@ -96,22 +97,22 @@ function Dashboard() {
         <div style={styles.card}>
           <h3 style={styles.cardTitle}>Total Bornes</h3>
           <div style={{...styles.bigNumber, color: 'black'}}>{isLoading ? "..." : stats.total}</div>
-           <div style={styles.subText}>⚡ Dispositifs actifs</div>
+           <div style={styles.subText}> Dispositifs actifs</div>
         </div>
         <div style={styles.card}>
           <h3 style={styles.cardTitle}>Bornes Libres</h3>
           <div style={{...styles.bigNumber, color: '#82ca9d'}}>{isLoading ? "..." : stats.available}</div>
-           <div style={styles.subText}>✅ Disponibles maintenant</div>
+           <div style={styles.subText}> Disponibles maintenant</div>
         </div>
         <div style={styles.card}>
           <h3 style={styles.cardTitle}>Bornes Occupées</h3>
           <div style={{...styles.bigNumber, color: '#448aff'}}>{isLoading ? "..." : stats.occupied}</div>
-           <div style={styles.subText}>⛔ En cours d'utilisation</div>
+           <div style={styles.subText}> En cours d'utilisation</div>
         </div>
         <div style={styles.card}>
           <h3 style={styles.cardTitle}>Bornes HS</h3>
           <div style={{...styles.bigNumber, color: '#ff5252'}}>{isLoading ? "..." : stats.out_of_service}</div>
-           <div style={{...styles.subText, color: '#ff5252'}}>🚨 Maintenance requise</div>
+           <div style={{...styles.subText, color: '#ff5252'}}> Maintenance requise</div>
         </div>
       </div>
 
