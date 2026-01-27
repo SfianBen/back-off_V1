@@ -856,7 +856,7 @@ function Map() {
             if (hasAnomalie) color = '#e74c3c';
             else if (libres > 0) color = '#2ecc71';
             return (
-              <Marker key={parking.id} position={[parking.latitude, parking.longitude]} icon={createParkingIcon(occupees, total, color)}>
+              <Marker key={parking.id} position={[parking.latitude, parking.longitude]} icon={createParkingIcon(libres, total, color)}>
                 <Popup><ParkingPopup parking={parking} onDelete={deleteParking} onReload={loadParkings} token={token} /></Popup>
               </Marker>
             );

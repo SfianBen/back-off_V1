@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { List, Search, Filter, MapPin } from 'lucide-react';
 import { API_URL } from '../config';
-// ON A SUPPRIMÉ L'IMPORT DE MOCKDATA 🗑️
 
 function BornesList() {
   const [bornes, setBornes] = useState([]); 
@@ -13,7 +12,7 @@ function BornesList() {
   const [cityFilter, setCityFilter] = useState('all');
 
   useEffect(() => {
-    const fetchBornesAndLogs = async () => {
+    const fetchAllData = async () => {
       try {
         const token = localStorage.getItem("userToken");
         const headers = { 
@@ -21,30 +20,52 @@ function BornesList() {
             'Content-Type': 'application/json'
         };
 
-        // --- STRATÉGIE DE FUSION ---
-        // On lance les deux requêtes en parallèle pour gagner du temps
         const [docksRes, logsRes] = await Promise.all([
-          fetch(`${API_URL}/api/admin/docks?radius_meters=1000000`, { headers }), // 1. La structure
-          fetch(`${API_URL}/api/admin/logs?limit=1000`, { headers })             // 2. Les dates
+          fetch(`${API_URL}/api/admin/docks?radius_meters=1000000`, { headers }), 
+          fetch(`${API_URL}/api/admin/logs?limit=1000`, { headers })             
         ]);
 
         if (docksRes.ok) {
           const parkingsData = await docksRes.json();
-          let logsMap = {}; // Dictionnaire pour retrouver les dates rapidement
-
-          // Si la requête Logs a marché, on prépare le dictionnaire
+          
+          // --- A. DATES ---
+          let logsMap = {}; 
           if (logsRes.ok) {
             const logsData = await logsRes.json();
-            // On parcourt les logs pour associer chaque SensorID à sa dernière date
             logsData.logs.forEach(log => {
-              // On ne garde que la date la plus récente pour chaque capteur
               if (!logsMap[log.sensor_id]) {
                 logsMap[log.sensor_id] = log.changed_at;
               }
             });
           }
 
-          // APLATISSEMENT : Parking -> Bornes
+          // --- B. VILLES (Nominatim) ---
+          const geoEntries = await Promise.all(
+            parkingsData.map(async (group) => {
+              if (!group.latitude || !group.longitude) return [group.id, "Ville inconnue"];
+              try {
+                const url = `https://nominatim.openstreetmap.org/reverse?lat=${group.latitude}&lon=${group.longitude}&format=json&accept-language=fr`;
+                const resp = await fetch(url, {
+                  headers: { 'User-Agent': 'wheelock-frontend' },
+                });
+                
+                if (!resp.ok) return [group.id, "Ville inconnue"];
+                const j = await resp.json();
+                const addr = j.address || {};
+                const villeTrouvee = addr.city || addr.town || addr.village || addr.municipality || "Ville inconnue";
+                return [group.id, villeTrouvee];
+              } catch {
+                return [group.id, "Ville inconnue"];
+              }
+            })
+          );
+
+          const geoMap = {};
+          geoEntries.forEach(([id, ville]) => {
+            geoMap[id] = ville;
+          });
+
+          // --- C. FUSION ---
           let allBornesFlat = [];
 
           parkingsData.forEach(parking => {
@@ -54,22 +75,27 @@ function BornesList() {
                 ? `${parking.latitude.toFixed(4)}, ${parking.longitude.toFixed(4)}` 
                 : "-";
 
+              const villeReelle = geoMap[parking.id] || "-";
+
               parking.docks.forEach(dock => {
-                // On récupère l'ID du capteur
                 const sensorId = dock.sensor_id || dock.name || String(dock.id);
+
+                // --- MODIFICATION 1 : Traduction simplifiée ---
+                const traductions = {
+                    "available": "libre",
+                    "occupied": "occupée",
+                    // Tout le reste (out_of_service) sera géré par le défaut "anomalie"
+                };
+
+                // Si le statut est "out_of_service", il tombera dans le || "anomalie"
+                const statutFinal = traductions[dock.status] || "anomalie";
 
                 allBornesFlat.push({
                   id: sensorId,
                   parkingNom: parking.name || "Parking Inconnu",
                   coordonnees: gpsFormat,
-                  
-                  // VILLE : Vide pour l'instant comme demandé
-                  ville: "-", 
-                  
-                  // STATUT : Traduction
-                  statut: dock.status === "available" ? "libre" : (dock.status === "occupied" ? "occupée" : "anomalie"),
-                  
-                  // DATE : On regarde dans notre Map si on a une date, sinon "-"
+                  ville: villeReelle, 
+                  statut: statutFinal,
                   date: logsMap[sensorId] || "-"
                 });
               });
@@ -79,17 +105,17 @@ function BornesList() {
           setBornes(allBornesFlat);
         }
       } catch (error) {
-        console.error("Erreur API", error);
+        console.error("Erreur générale", error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchBornesAndLogs();
+    fetchAllData();
   }, []);
 
-  // --- FILTRES (Reste identique) ---
-  const availableCities = [...new Set(bornes.map(b => b.ville))]; 
+  // FILTRES AUTOMATIQUES
+  const availableCities = [...new Set(bornes.map(b => b.ville))].sort(); 
 
   const filteredBornes = bornes.filter(borne => {
     const matchSearch = 
@@ -106,7 +132,7 @@ function BornesList() {
         <List size={32} style={{ marginRight: '15px', color: '#222' }} />
         <div>
           <h1 style={styles.title}>Liste des bornes</h1>
-          <p style={styles.subtitle}>Vue détaillée et filtrable de toutes les bornes</p>
+          <p style={styles.subtitle}>Géolocalisation & Statuts temps réel</p>
         </div>
       </div>
 
@@ -122,21 +148,25 @@ function BornesList() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+
+          {/* --- MODIFICATION 2 : Filtre simplifié --- */}
           <div style={styles.selectWrapper}>
             <Filter size={16} color="#666" style={{ marginRight: '8px' }} />
             <select style={styles.select} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
               <option value="all">Tous les statuts</option>
               <option value="libre">Libre</option>
               <option value="occupée">Occupée</option>
+              {/* Option "Hors service" supprimée */}
               <option value="anomalie">Anomalie</option>
             </select>
           </div>
+
           <div style={styles.selectWrapper}>
             <MapPin size={16} color="#666" style={{ marginRight: '8px' }} />
             <select style={styles.select} value={cityFilter} onChange={(e) => setCityFilter(e.target.value)}>
               <option value="all">Toutes les villes</option>
               {availableCities.map(ville => (
-                <option key={ville} value={ville}>{ville === '-' ? 'Ville non définie' : ville}</option>
+                <option key={ville} value={ville}>{ville}</option>
               ))}
             </select>
           </div>
@@ -146,7 +176,9 @@ function BornesList() {
       <div style={styles.tableCard}>
         <div style={{ marginBottom: '20px' }}>
           <h3 style={styles.sectionTitle}>Bornes ({filteredBornes.length})</h3>
-          <p style={styles.subtitle}>{isLoading ? "Chargement..." : "Données temps réel (API)"}</p>
+          <p style={styles.subtitle}>
+             {isLoading ? "Récupération des adresses..." : "Données synchronisées"}
+          </p>
         </div>
         <table style={styles.table}>
           <thead>
@@ -168,13 +200,13 @@ function BornesList() {
                   <td style={{...styles.td, fontFamily: 'monospace', color: '#555'}}>{borne.coordonnees}</td>
                   <td style={styles.td}><span style={styles.badgeVille}>{borne.ville}</span></td>
                   <td style={styles.td}><span style={getStatusStyle(borne.statut)}>{borne.statut}</span></td>
-                  <td style={{...styles.td, color: '#666', fontSize: '12px'}}>
-                    {borne.date}
-                  </td>
+                  <td style={{...styles.td, color: '#666', fontSize: '12px'}}>{borne.date}</td>
                 </tr>
               ))
             ) : (
-               <tr><td colSpan="6" style={{padding: '30px', textAlign: 'center', color: '#888'}}>Aucune donnée trouvée.</td></tr>
+               <tr><td colSpan="6" style={{padding: '30px', textAlign: 'center', color: '#888'}}>
+                 {isLoading ? "Chargement..." : "Aucune donnée trouvée."}
+               </td></tr>
             )}
           </tbody>
         </table>
@@ -183,13 +215,15 @@ function BornesList() {
   );
 }
 
-// STYLES (Inchangés par rapport à ta version)
+// --- MODIFICATION 3 : Styles simplifiés (3 couleurs) ---
 const getStatusStyle = (status) => {
   const base = { padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '600', textTransform: 'lowercase', display: 'inline-block' };
-  if (status === 'libre') return { ...base, backgroundColor: '#e8f5e9', color: '#2e7d32' };
-  if (status === 'occupée') return { ...base, backgroundColor: '#e3f2fd', color: '#1565c0' };
-  if (status === 'anomalie') return { ...base, backgroundColor: '#ffebee', color: '#c62828' };
-  return base;
+  
+  if (status === 'libre') return { ...base, backgroundColor: '#e8f5e9', color: '#2e7d32' }; // Vert
+  if (status === 'occupée') return { ...base, backgroundColor: '#e3f2fd', color: '#1565c0' }; // Bleu
+  
+  // Anomalie (Rouge) regroupe tout le reste (dont hors service)
+  return { ...base, backgroundColor: '#ffebee', color: '#c62828' };
 };
 
 const styles = {
