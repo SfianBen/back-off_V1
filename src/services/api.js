@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8000";
+import { API_URL } from '../config'; 
 
 // ============ AUTHENTIFICATION ============
 export async function login(username, password) {

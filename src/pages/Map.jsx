@@ -9,7 +9,7 @@ import {
   deleteParkingGroup,         
 } from '../services/api';
 
-const API_URL = "http://localhost:8000";
+import { API_URL } from '../config'; 
 
 // Icône parking
 const createParkingIcon = (occupees, total, color) => new L.DivIcon({
@@ -656,7 +656,7 @@ function Map() {
     }
     
     try {
-      const res = await fetch(`${API_URL}/api/admin/docks?lat=50.357&lon=3.523&radius_meters=5000`, {
+      const res = await fetch(`${API_URL}/api/admin/docks?lat=50.357&lon=3.523&radius_meters=50000000`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
