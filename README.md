@@ -22,15 +22,15 @@ Elle communique avec le serveur (Back-End) via une **API REST** sécurisée pour
 ---
 
 ## 3. Configuration (.env)
-Pour fonctionner, l'application doit savoir où se trouve le serveur Back-End.
-Créez un fichier `.env` à la racine du projet (au même niveau que `package.json`) et ajoutez-y la ligne suivante :
-```env
-# URL de l'API Back-End (FastAPI)
-# Pour le développement local :
-VITE_API_URL=http://localhost:8000
+Par défaut, l'application est pré-configurée pour fonctionner en local sur le port 8000.
 
-# Pour la production (exemple) :
-# VITE_API_URL=https://api.wheelock.fr
+Cependant, si vous souhaitez changer l'adresse du serveur (ex: pour la mise en production), vous pouvez surcharger la configuration par défaut :
+
+1. Créez un fichier nommé `.env` à la racine du projet.
+2. Ajoutez la variable `VITE_API_URL` avec votre adresse :
+
+```env
+VITE_API_URL=http://votre-adresse-ip:8000
 ```
 
 **Note :** Si vous changez l'adresse du serveur, il suffit de modifier cette ligne et de relancer le projet.
